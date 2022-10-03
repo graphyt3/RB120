@@ -105,7 +105,7 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to Rock, Paper, Scissors - The first to win 10 games is the champion!"
+    puts "Welcome to Rock, Paper, Scissors - The first to win #{Player::MAX_SCORE} games is the champion!"
     puts "-----------------------------------------------------------------------------"
   end
 
