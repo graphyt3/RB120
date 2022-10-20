@@ -12,12 +12,23 @@ Rule
 
 class Player
   MAX_SCORE = 3
-  attr_accessor :move, :name, :score
+  attr_accessor :move, :name, :score, :move_history
 
   def initialize
     set_name
     @score = 0
+    @move_history = []
     # maybe a "name"? what about a "move"?
+  end
+
+  def choice_conversion(input)
+    case input
+    when 'rock' then Rock.new(input)
+    when 'scissors' then Scissors.new(input)
+    when 'paper' then Paper.new(input)
+    when 'lizard' then Lizard.new(input)
+    when 'spock' then Spock.new(input)
+    end
   end
 
   def human?
@@ -45,18 +56,45 @@ class Human < Player
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice."
     end
-    self.move = Move.new(choice)
+    self.move = choice_conversion(choice)
+    move_history << move
   end
 end
 
 class Computer < Player
   def set_name
-    self.name = ["Joss", "Sam", "Shams"].sample
+    self.name = ["R2D2", "K.I.T.T.", "Megatron", "Wall-E"].sample
   end
 
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    self.move = choice_conversion(Move::VALUES.sample)
+    move_history << move
   end
+
+  def computer_conversion(name)
+    case name
+    when "R2D2" then R2D2.new(name)
+    when "K.I.T.T." then KITT.new(name)
+    when "Megatron" then Megatron.new(name)
+    when "Wall-E" then WALLE.new(name)
+    end
+  end
+end
+
+class R2D2 < Computer
+
+end
+
+class KITT < Computer
+
+end
+
+class Megatron < Computer
+
+end
+
+class WALLE < Computer
+
 end
 
 class Move
@@ -86,34 +124,38 @@ class Move
     @value == 'lizard'
   end
 
-  def >(other_move)
-    (rock? && other_move.scissors?) ||
-      (rock? && other_move.lizard?) ||
-      (paper? && other_move.rock?) ||
-      (paper? && other_move.spock?) ||
-      (scissors? && other_move.paper?) ||
-      (scissors? && other_move.lizard?) ||
-      (lizard? && other_move.paper?) ||
-      (lizard? && other_move.spock?) ||
-      (spock? && other_move.rock?) ||
-      (spock? && other_move.scissors?)
-  end
-
-  def <(other_move)
-    (rock? && other_move.paper?) ||
-      (rock? && other_move.spock?) ||
-      (paper? && other_move.scissors?) ||
-      (paper? && other_move.lizard?) ||
-      (scissors? && other_move.rock?) ||
-      (scissors? && other_move.spock?) ||
-      (lizard? && other_move.rock?) ||
-      (lizard? && other_move.scissors?) ||
-      (spock? && other_move.lizard?) ||
-      (spock? && other_move.paper?)
-  end
-
   def to_s
     @value
+  end
+end
+
+class Rock < Move
+  def >(other_move)
+    other_move.scissors? || other_move.lizard?
+  end
+end
+
+class Scissors < Move
+  def >(other_move)
+    other_move.lizard? || other_move.paper?
+  end
+end
+
+class Paper < Move
+  def >(other_move)
+    other_move.rock? || other_move.spock?
+  end
+end
+
+class Lizard < Move
+  def >(other_move)
+    other_move.paper? || other_move.spock?
+  end
+end
+
+class Spock < Move
+  def >(other_move)
+    other_move.rock? || other_move.scissors?
   end
 end
 
@@ -122,11 +164,13 @@ class RPSGame
   attr_accessor :human, :computer, :champion
 
   def initialize
+    clear_screen
     @human = Human.new
     @computer = Computer.new
   end
 
   def display_welcome_message
+    clear_screen
     puts "Welcome to Rock, Paper, Scissors, Lizard, & Spock - The first to win #{Player::MAX_SCORE} games is the champion!"
     puts "-------------------------------------------------------------------------------------------"
   end
@@ -136,24 +180,35 @@ class RPSGame
   end
 
   def display_choices
+    clear_screen
     puts "#{human.name} chose #{human.move}"
     puts "#{computer.name} chose #{computer.move}"
   end
 
+  def clear_screen
+    system('clear')
+  end
+
+  def pause(time)
+    sleep(time)
+  end
+
   def display_winner
-    if human.move < (computer.move)
-      computer.score += 1
-      puts "#{computer.name} won!"
-    elsif human.move > (computer.move)
+    if human.move > (computer.move)
       human.score += 1
       puts "#{human.name} won!"
-    else
+    elsif human.move.to_s == computer.move.to_s
       puts "It's a tie!"
+    else
+      computer.score += 1
+      puts "#{computer.name} won!"
     end
   end
 
   def display_score
+    puts ""
     puts "#{human.name} has won #{human.score} times | #{computer.name} has won #{computer.score} times"
+    puts ""
   end
 
   def play_again?
@@ -167,6 +222,20 @@ class RPSGame
 
     return true if answer == 'y'
     return false if answer == 'n'
+  end
+
+  def display_history
+    puts " Round |#{human.name.center(15)}|#{computer.name.center(15)}"
+    puts "-" * 37
+    counter = 0
+    while counter < human.move_history.size
+      index = counter.to_s
+      human_move = human.move_history[counter].to_s
+      computer_move = computer.move_history[counter].to_s
+      puts "#{index.center(7)}|#{human_move.center(15)}|#{computer_move.center(15)}"
+      counter += 1
+    end
+    puts ""
   end
 
   def max_score?
@@ -187,6 +256,7 @@ class RPSGame
         display_choices
         display_winner
         display_score
+        display_history
         break if max_score?
       end
       break unless play_again?
