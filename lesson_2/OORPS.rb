@@ -51,6 +51,8 @@ class Human < Player
   def choose
     choice = nil
     loop do
+      puts ""
+      puts "-" * 93
       puts "Please choose rock, paper, scissors, lizard, or spock:"
       choice = gets.chomp
       break if Move::VALUES.include?(choice)
@@ -66,35 +68,70 @@ class Computer < Player
     self.name = ["R2D2", "K.I.T.T.", "Megatron", "Wall-E"].sample
   end
 
-  def choose
+  def choose(_)
     self.move = choice_conversion(Move::VALUES.sample)
     move_history << move
-  end
-
-  def computer_conversion(name)
-    case name
-    when "R2D2" then R2D2.new(name)
-    when "K.I.T.T." then KITT.new(name)
-    when "Megatron" then Megatron.new(name)
-    when "Wall-E" then WALLE.new(name)
-    end
   end
 end
 
 class R2D2 < Computer
+  def set_name
+    self.name = "R2D2"
+  end
+
+  def choose(other_move)                  # high tendency to choose scissors 70% of the time! 
+    number = pick_number
+    if number <= 7
+      self.move = choice_conversion('scissors')
+    else
+      self.move = choice_conversion(['rock', 'paper', 'lizard', 'spock'].sample)
+    end
+    move_history << move
+  end
+
+  def pick_number
+    rand(1..10)
+  end
 
 end
 
 class KITT < Computer
-
+  def set_name
+    self.name = "K.I.T.T."
+  end
+  # randomly select moves!
 end
 
 class Megatron < Computer
+  def set_name
+    self.name = "Megatron"
+  end
 
+  def choose(other_move)                  # always chooses winning move!
+    #self.move = choice_conversion('paper')
+    self.move = select_winner(other_move)
+    move_history << move
+  end
+
+  def select_winner(input)
+    move = nil
+    loop do
+      move = choice_conversion(Move::VALUES.sample)
+      break if move > (input)
+    end
+    move
+  end
 end
 
 class WALLE < Computer
+  def set_name
+    self.name = "Wall-E"
+  end
 
+  def choose(other_move)                  # always chooses paper to recycle! 
+    self.move = choice_conversion('paper')
+    move_history << move
+  end
 end
 
 class Move
@@ -166,23 +203,53 @@ class RPSGame
   def initialize
     clear_screen
     @human = Human.new
-    @computer = Computer.new
+    @computer = computer_generator
+  end
+
+  def computer_generator
+    num = rand(1..4)
+    case num
+    when 1 then return Megatron.new
+    when 2 then return R2D2.new
+    when 3 then return KITT.new
+    when 4 then return WALLE.new
+    end
   end
 
   def display_welcome_message
     clear_screen
     puts "Welcome to Rock, Paper, Scissors, Lizard, & Spock - The first to win #{Player::MAX_SCORE} games is the champion!"
-    puts "-------------------------------------------------------------------------------------------"
+  end
+
+  def display_rules
+    puts ""
+    puts "RULES OF THE GAME:"
+    puts ""
+    puts "Rock BREAKS Scissors and CRUSHES Lizard"
+    puts "Paper COVERS Rock and DISPROVES Spock"
+    puts "Scissors CUTS Paper and DECAPITATES Lizard"
+    puts "Lizard POISONS Spock and EATS Paper"
+    puts "Spock SMASHES Scissors and VAPORIZES Rock"
   end
 
   def display_goodbye_message
+    clear_screen
     puts "Thanks for playing Rock, Paper, Scissors! Good-Bye!"
   end
 
   def display_choices
     clear_screen
-    puts "#{human.name} chose #{human.move}"
-    puts "#{computer.name} chose #{computer.move}"
+    puts "#{human.name} chose #{human.move}!" 
+    pause(1.25)
+    puts "#{computer.name} chose #{computer.move}!"
+    pause(1.25)
+    puts ""
+  end
+
+  def display_opponent
+    puts ""
+    puts "Hello #{human.name}. You'll be facing off against #{computer.name} today...."
+    pause(4)
   end
 
   def clear_screen
@@ -208,7 +275,6 @@ class RPSGame
   def display_score
     puts ""
     puts "#{human.name} has won #{human.score} times | #{computer.name} has won #{computer.score} times"
-    puts ""
   end
 
   def play_again?
@@ -225,17 +291,17 @@ class RPSGame
   end
 
   def display_history
+    puts ""
     puts " Round |#{human.name.center(15)}|#{computer.name.center(15)}"
     puts "-" * 37
     counter = 0
     while counter < human.move_history.size
-      index = counter.to_s
+      index = (counter + 1).to_s
       human_move = human.move_history[counter].to_s
       computer_move = computer.move_history[counter].to_s
       puts "#{index.center(7)}|#{human_move.center(15)}|#{computer_move.center(15)}"
       counter += 1
     end
-    puts ""
   end
 
   def max_score?
@@ -245,18 +311,22 @@ class RPSGame
   def reset_scores
     human.score = 0
     computer.score = 0
+    human.move_history = []
+    computer.move_history = []
   end
 
   def play
+    display_opponent
     display_welcome_message
+    display_rules
     loop do
       loop do
         human.choose
-        computer.choose
+        computer.choose(human.move)
         display_choices
         display_winner
-        display_score
         display_history
+        display_score   
         break if max_score?
       end
       break unless play_again?
