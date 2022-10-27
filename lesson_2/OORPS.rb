@@ -314,14 +314,20 @@ class RPSGame
     puts ""
     puts " Round |#{human.name.center(15)}|#{computer.name.center(15)}"
     puts "-" * 37
-    counter = 0
-    while counter < human.move_history.size
-      index = (counter + 1).to_s
-      human_mv = human.move_history[counter].to_s
-      computer_mv = computer.move_history[counter].to_s
-      puts "#{index.center(7)}|#{human_mv.center(15)}|#{computer_mv.center(15)}"
-      counter += 1
+
+    human.move_history.each_with_index do |mv, index|
+      round = (index + 1).to_s
+      computer_mv = computer.move_history[index].to_s
+      puts "#{round.center(7)}|#{mv.to_s.center(15)}|#{computer_mv.center(15)}"
     end
+    # counter = 0
+    # while counter < human.move_history.size
+    #  index = (counter + 1).to_s
+    #  human_mv = human.move_history[counter].to_s
+    #  computer_mv = computer.move_history[counter].to_s
+    #  puts "#{index.center(7)}|#{human_mv.center(15)}|#{computer_mv.center(15)}"
+    #  counter += 1
+    # end
   end
 
   def max_score?
