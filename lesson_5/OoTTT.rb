@@ -68,6 +68,10 @@ class Board
     end
     nil
   end
+
+  def fifth_square_marked?
+    @squares[5].marker == Square::INITIAL_MARKER ? 5 : nil
+  end
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength
 
@@ -229,7 +233,9 @@ class TTTGame
     if !square 
       square = computer_defense
     end
-
+    if !square
+      square = mark_fifth_square
+    end
     if !square
       square = board.unmarked_keys.sample
     end
@@ -242,6 +248,10 @@ class TTTGame
 
   def computer_offense
     board.find_at_risk_square(COMPUTER_MARKER)
+  end
+
+  def mark_fifth_square
+    board.fifth_square_marked?
   end
 
   def current_player_moves
