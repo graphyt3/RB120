@@ -115,11 +115,14 @@ class Square
 end
 
 class Player
-  attr_reader :marker, :score
+  COMPUTER_NAMES = ['R2D2', 'K.I.T.T', 'Megatron', 'Bob']
+  attr_reader :score
+  attr_accessor :name, :marker
 
-  def initialize(marker)
+  def initialize(marker, name = COMPUTER_NAMES.sample)
     @marker = marker
     @score = 0
+    @name = name
   end
 
   def won
@@ -150,6 +153,8 @@ class TTTGame
 
   def play
     clear
+    choose_name
+    choose_marker
     display_welcome_message
     main_game
     display_goodbye_message
@@ -158,6 +163,7 @@ class TTTGame
   private
 
   def main_game
+    clear
     loop do
       display_board
       player_move
@@ -179,11 +185,36 @@ class TTTGame
       break if human.champion? || computer.champion?
       any_key_to_continue
       reset
+      display_board
     end
   end
 
   def pause(num)
     sleep(num)
+  end
+
+  def choose_name
+    answer = nil
+    loop do 
+      puts "What is your name?"
+      answer = gets.chomp
+      break unless answer.empty?
+      puts "Please enter a valid name!"
+    end
+    human.name = answer
+  end
+
+  def choose_marker
+    answer = nil
+    loop do
+      puts "Please select 'X' or 'O'"
+      answer = gets.chomp.upcase
+      break if ['X', 'O'].include?(answer)
+      puts "Must select 'X' or 'O'!"
+    end
+    human.marker = answer
+    computer.marker = 'O' if answer == 'X'
+    computer.marker = 'X' if answer == 'O'
   end
 
   def any_key_to_continue
@@ -192,9 +223,12 @@ class TTTGame
   end
 
   def display_welcome_message
-    puts "Welcome to Tic Tac Toe!"
+    clear
+    puts "Welcome to Tic Tac Toe #{human.name}!"
+    puts "Your opponent is #{computer.name}"
+    puts ""
     puts "The first to #{CHAMPION_WINS} wins is the CHAMPION!"
-    pause(3)
+    any_key_to_continue
   end
 
   def display_goodbye_message
@@ -216,7 +250,6 @@ class TTTGame
   end
 
   def human_moves
-    # puts "Choose a square (#{board.unmarked_keys.join(', ')}): "
     puts "Choose a square (#{joinor(board.unmarked_keys)}): "
     square = nil
     loop do
@@ -230,15 +263,9 @@ class TTTGame
   def computer_moves
     square = nil
     square = computer_offense
-    if !square 
-      square = computer_defense
-    end
-    if !square
-      square = mark_fifth_square
-    end
-    if !square
-      square = board.unmarked_keys.sample
-    end
+    square = computer_defense if !square
+    square = mark_fifth_square if !square
+    square = board.unmarked_keys.sample if !square
     board[square] = computer.marker
   end
 
@@ -278,7 +305,7 @@ class TTTGame
   end
 
   def display_board
-    puts "You're a #{human.marker}. The Computer is a #{computer.marker}"
+    puts "#{human.name} is #{human.marker}. #{computer.name} is #{computer.marker}"
     puts ""
     board.draw
     puts ""
@@ -287,12 +314,12 @@ class TTTGame
   def display_result
     clear_screen_and_display_board
     case board.winning_marker
-    when HUMAN_MARKER
+    when human.marker
       human.won 
-      puts "You Won!"
-    when COMPUTER_MARKER
+      puts "#{human.name} Won!"
+    when computer.marker
       computer.won 
-      puts "Computer won!"
+      puts "#{computer.name} won!"
     else
       puts "It's a tie!"
     end
@@ -300,12 +327,12 @@ class TTTGame
   end
 
   def display_scores
-    puts "The Scoreboard is....You: #{human.score} | Computer: #{computer.score}"
+    puts "The Scoreboard is....#{human.name}: #{human.score} | #{computer.name}: #{computer.score}"
   end
 
   def display_champion_message
-    champion = (human.champion? ? "You" : "Computer")
-    puts "The Tic Tac Toe Champion is crowned: #{champion}!"
+    champion = (human.champion? ? "#{human.name}" : "#{computer.name}")
+    puts "The Tic Tac Toe Champion is crowned: #{champion} wins!"
   end
 
   def play_again?
@@ -313,7 +340,7 @@ class TTTGame
     loop do
       puts "Would you like to play again? (y/n)"
       answer = gets.chomp.downcase
-      break if %(y n).include? answer
+      break if ['y', 'n'].include? answer
       puts "Sorry, must be y or n!"
     end
     answer == 'y'
