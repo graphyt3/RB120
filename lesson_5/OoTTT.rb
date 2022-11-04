@@ -63,7 +63,7 @@ class Board
     WINNING_LINES.each do |line|
       squares = @squares.values_at(*line)
       if two_identical_markers?(squares, marker)
-         return @squares.select {|k, v| line.include?(k) && v.marker == ' '}.keys.first
+        return @squares.select { |k, v| line.include?(k) && v.marker == ' ' }.keys.first
       end
     end
     nil
@@ -195,7 +195,7 @@ class TTTGame
 
   def choose_name
     answer = nil
-    loop do 
+    loop do
       puts "What is your name?"
       answer = gets.chomp
       break unless answer.empty?
@@ -261,7 +261,6 @@ class TTTGame
   end
 
   def computer_moves
-    square = nil
     square = computer_offense
     square = computer_defense if !square
     square = mark_fifth_square if !square
@@ -305,7 +304,8 @@ class TTTGame
   end
 
   def display_board
-    puts "#{human.name} is #{human.marker}. #{computer.name} is #{computer.marker}"
+    puts "#{human.name} is #{human.marker}. "\
+    "#{computer.name} is #{computer.marker}"
     puts ""
     board.draw
     puts ""
@@ -313,25 +313,30 @@ class TTTGame
 
   def display_result
     clear_screen_and_display_board
+    calculate_results
+    display_scores
+  end
+
+  def calculate_results
     case board.winning_marker
     when human.marker
-      human.won 
+      human.won
       puts "#{human.name} Won!"
     when computer.marker
-      computer.won 
+      computer.won
       puts "#{computer.name} won!"
     else
       puts "It's a tie!"
     end
-    display_scores
   end
 
   def display_scores
-    puts "The Scoreboard is....#{human.name}: #{human.score} | #{computer.name}: #{computer.score}"
+    puts "The Scoreboard is....#{human.name}: #{human.score} "\
+    "| #{computer.name}: #{computer.score}"
   end
 
   def display_champion_message
-    champion = (human.champion? ? "#{human.name}" : "#{computer.name}")
+    champion = (human.champion? ? human.name : computer.name)
     puts "The Tic Tac Toe Champion is crowned: #{champion} wins!"
   end
 
