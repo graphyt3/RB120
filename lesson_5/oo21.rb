@@ -3,50 +3,12 @@ module Displayable
     puts "==> #{msg}"
   end
 
+  def single_spacer
+    puts ''
+  end
+
   def clear_screen
     system 'clear'
-  end
-end
-
-class Player < Participant
-  def initialize
-    # what would the "data" or "states" of a Player object entail?
-    # maybe cards? a name?
-  end
-
-  def hit
-  end
-
-  def stay
-  end
-
-  def busted?
-  end
-
-  def total
-    # definitely looks like we need to know about "cards" to produce some total
-  end
-end
-
-class Dealer < Participant
-  def initialize
-    # seems like very similar to Player... do we even need this?
-  end
-
-  def deal
-    # does the dealer or the deck deal?
-  end
-
-  def hit
-  end
-
-  def stay
-  end
-
-  def busted?
-  end
-
-  def total
   end
 end
 
@@ -61,6 +23,64 @@ class Participant
     @current_hand = []
   end
 
+  def hit
+  end
+
+  def stay
+  end
+
+  def busted?
+    @hand_score > Deck::HIGH
+  end
+
+  def update_hand_total_score
+    values = @current_hand.map { |card| card.face } # extract all card values & store into new array
+    sum = 0
+    values.each do |face|
+      if 'JQK'.include?(face)
+        sum += 10
+      elsif face == 'A'
+        sum += 11
+      else
+        sum += face.to_i
+      end
+    end
+    sum = total_aces(values, sum)
+    @hand_score = sum
+    # definitely looks like we need to know about "cards" to produce some total
+  end
+
+  def total_aces(faces, total)
+    number_of_aces = faces.select { |face| face == 'A' }
+    number_of_aces.count.times do
+      total -= 10 if total > 21
+    end
+    total
+  end
+end
+
+class Player < Participant
+  def initialize
+    super
+    # what would the "data" or "states" of a Player object entail?
+    # maybe cards? a name?
+  end
+
+ 
+end
+
+class Dealer < Participant
+  attr_accessor :turn
+  
+  def initialize
+    super
+    @turn = 'no'
+  end
+
+  def deal
+    # does the dealer or the deck deal?
+  end
+
 end
 
 class Deck
@@ -68,28 +88,21 @@ class Deck
   SUITS = %w[Hearts Diamonds Clubs Spades].freeze
   HIGH = 21
   DEALER_BREAK = 17
-  
+
+  attr_accessor :cards
   
   def initialize
-    @deck = []
+    @cards = []
     new_deck_shuffle
-    # obviously, we need some data structure to keep track of cards
-    # array, hash, something else?
   end
 
   def new_deck_shuffle
     FACES.each do |faces|
       SUITS.each do |suits|
-        temp_holder = Card.new(faces, suits)
-        @deck << temp_holder
-        # temp_holder = []
-        # temp_holder << suits
-        # temp_holder << faces
-        # temp_holder << "#{faces} of #{suits}" # Name of card to be seen on screen
-        # @deck << temp_holder
+        @cards << Card.new(faces, suits)
       end
     end
-    @deck.shuffle!
+    @cards.shuffle!
   end
 
   def deal
@@ -111,20 +124,26 @@ end
 
 class Game
   include Displayable
-  attr_accessor :deck
+  attr_accessor :deck, :player, :dealer
 
   def initialize
     @deck = Deck.new
+    @player = Player.new
+    @dealer = Dealer.new
   end
 
   def start
     welcome_message
-    p @deck
     deal_cards
-    show_initial_cards
-    player_turn
-    dealer_turn
-    show_result
+    #loop do
+      calculate_current_hand
+      #break if @player.hand_score == Deck::HIGH || @dealer.hand_score == Deck::HIGH
+      show_cards
+      player_turn
+      dealer_turn
+      show_result
+    #end
+    #goodbye_message
   end
 
   def welcome_message
@@ -144,15 +163,46 @@ class Game
   end
 
   def deal_cards
-
+    2.times do
+      @player.current_hand << @deck.cards.pop
+      @dealer.current_hand << @deck.cards.pop
+    end
   end
 
-  def show_initial_cards
+  def show_cards
+    clear_screen
+    if dealer.turn == 'yes'
+      prompt("Dealer has: #{cards_in_hand(@dealer.current_hand)} for a total of #{@dealer.hand_score}")
+    else
+      prompt("Dealer has: #{@dealer.current_hand[0].face} of #{@dealer.current_hand[0].suit}, and unknown card")
+    end
+    single_spacer
+    prompt("You have: #{cards_in_hand(@player.current_hand)} for a total of #{@player.hand_score}")
+  end
 
+  def cards_in_hand(participant_hand)
+    cards_listed = participant_hand.map { |card| "#{card.face} of #{card.suit}" }
+    cards_listed.join(', ')
+  end
+
+  def calculate_current_hand
+    @player.update_hand_total_score
+    @dealer.update_hand_total_score
+    # needs to check if either hand == 21!
+  end
+
+  def dealt_21?(participant_hand)
+    participant_hand == Deck::HIGH
   end
 
   def player_turn
+    loop do
+      
+      loop do
 
+      end
+      
+    end
   end
 
   def dealer_turn
@@ -161,6 +211,17 @@ class Game
 
   def show_result
 
+  end
+
+  def play_again?
+    prompt("Would you like to play again? (y/n)")
+    answer = gets.chomp
+    answer.downcase.start_with?('y') 
+  end
+
+  def goodbye_message
+    clear_screen
+    prompt("Thanks for playing 21!")
   end
 end
 
