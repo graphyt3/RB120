@@ -10,12 +10,20 @@ module Displayable
   def clear_screen
     system 'clear'
   end
+
+  def pause(num)
+    sleep(num)
+  end
+
+  def press_enter_to_continue
+    prompt("Press enter to continue")
+    gets
+  end
 end
 
 class Participant
   attr_accessor :total_wins, :hand_score, :current_hand
 
-  MAX_WINS = 3
   # what goes in here? all the redundant behaviors from Player and Dealer?
   def initialize
     @total_wins = 0
@@ -47,7 +55,6 @@ class Participant
     end
     sum = total_aces(values, sum)
     @hand_score = sum
-    # definitely looks like we need to know about "cards" to produce some total
   end
 
   def total_aces(faces, total)
@@ -60,27 +67,22 @@ class Participant
 end
 
 class Player < Participant
+  attr_accessor :choice
+
   def initialize
     super
-    # what would the "data" or "states" of a Player object entail?
-    # maybe cards? a name?
-  end
-
- 
+    @choice = ''
+  end 
 end
 
 class Dealer < Participant
-  attr_accessor :turn
+  attr_accessor :turn, :win_status
   
   def initialize
     super
+    @win_status = 'no'
     @turn = 'no'
   end
-
-  def deal
-    # does the dealer or the deck deal?
-  end
-
 end
 
 class Deck
@@ -125,6 +127,7 @@ end
 class Game
   include Displayable
   attr_accessor :deck, :player, :dealer
+  MAX_WINS = 3
 
   def initialize
     @deck = Deck.new
@@ -133,18 +136,26 @@ class Game
   end
 
   def start
-    welcome_message
-    deal_cards
-    #loop do
-      calculate_current_hand
-      #break if @player.hand_score == Deck::HIGH || @dealer.hand_score == Deck::HIGH
-      show_cards
-      player_turn
-      dealer_turn
-      show_result
-    #end
-    #goodbye_message
+    loop do
+      welcome_message
+      loop do 
+        deal_cards
+      
+        #break if dealt_21?(@player) || dealt_21?(@dealer)
+        player_turn
+        dealer_turn
+        show_result
+        break if champion?
+        press_enter_to_continue
+        reset_hands
+      end
+      break unless play_again?
+      game_reset
+    end
+    goodbye_message
   end
+  
+  private
 
   def welcome_message
     clear_screen
@@ -156,7 +167,7 @@ class Game
     prompt('Numbered cards are their own value. (I.E 2 = 2).')
     prompt('(J)acks, (Q)ueens, (K)ings are worth 10 each.')
     prompt('(A)ces are worth 1 or 11.')
-    prompt("The first to win #{Participant::MAX_WINS} rounds is the winner!")
+    prompt("The first to win #{MAX_WINS} rounds is the winner!")
     prompt('=========================================')
     prompt('Press Enter to Start!')
     gets
@@ -171,13 +182,15 @@ class Game
 
   def show_cards
     clear_screen
-    if dealer.turn == 'yes'
+    if @dealer.turn == 'yes'
       prompt("Dealer has: #{cards_in_hand(@dealer.current_hand)} for a total of #{@dealer.hand_score}")
     else
       prompt("Dealer has: #{@dealer.current_hand[0].face} of #{@dealer.current_hand[0].suit}, and unknown card")
     end
     single_spacer
     prompt("You have: #{cards_in_hand(@player.current_hand)} for a total of #{@player.hand_score}")
+    single_spacer
+    puts "==============================================="
   end
 
   def cards_in_hand(participant_hand)
@@ -191,32 +204,94 @@ class Game
     # needs to check if either hand == 21!
   end
 
-  def dealt_21?(participant_hand)
-    participant_hand == Deck::HIGH
+  def dealt_21?(participant)
+    participant.hand_score == Deck::HIGH
   end
 
   def player_turn
+    calculate_current_hand
     loop do
-      
-      loop do
-
+      show_cards
+      @player.choice = player_choice
+      break unless @player.choice.start_with?('h')
+      @player.current_hand << @deck.cards.pop # player hits
+      calculate_current_hand
+      if @player.busted?
+        @dealer.win_status = 'yes'
+        break
       end
-      
     end
   end
 
-  def dealer_turn
+  def player_choice
+    answer = nil
+    loop do 
+      prompt("Your turn: (H)it or (S)tay?")
+      answer = gets.chomp.downcase
+      break if answer.start_with?('h') || answer.start_with?('s')
+      prompt("Please enter 'h' or 's'")
+    end
+    answer
+  end
 
+  def dealer_turn
+    @dealer.turn = 'yes' # to reveal dealer's hand
+    loop do
+      break if @dealer.win_status == 'yes' || @dealer.hand_score >= Deck::DEALER_BREAK ||
+        @dealer.busted?
+      @dealer.current_hand << @deck.cards.pop # dealer hits
+      calculate_current_hand
+    end
   end
 
   def show_result
+    show_cards
+    show_who_won
+    show_total_wins
+  end
 
+  def show_who_won
+    if @player.hand_score > @dealer.hand_score && !@player.busted?
+      @player.total_wins += 1
+      prompt('You won!')
+    elsif @dealer.hand_score > @player.hand_score && !@dealer.busted?
+      @dealer.total_wins += 1
+      prompt('Dealer won!')
+    elsif @player.hand_score == @dealer.hand_score
+      prompt("It's a push!")
+    elsif @dealer.busted? # computer busted?
+      @player.total_wins += 1
+      prompt('Dealer BUSTED - You won!')
+    else
+      @dealer.total_wins += 1
+      prompt('You BUSTED - Dealer won!') # player busted?
+    end
+  end
+
+  def show_total_wins
+    single_spacer
+    prompt("Grand Total Wins:: Player: #{@player.total_wins} | Dealer: #{@dealer.total_wins}")
+  end
+
+  def champion?
+    @player.total_wins == MAX_WINS || @dealer.total_wins == MAX_WINS
   end
 
   def play_again?
     prompt("Would you like to play again? (y/n)")
     answer = gets.chomp
     answer.downcase.start_with?('y') 
+  end
+
+  def reset_hands
+    @player.current_hand = []
+    @dealer.current_hand = []
+  end
+
+  def game_reset
+    @deck = Deck.new
+    @player = Player.new
+    @dealer = Dealer.new
   end
 
   def goodbye_message
