@@ -140,8 +140,7 @@ class Game
       welcome_message
       loop do 
         deal_cards
-      
-        #break if dealt_21?(@player) || dealt_21?(@dealer)
+        #  || dealt_21?(@dealer)
         player_turn
         dealer_turn
         show_result
@@ -211,6 +210,7 @@ class Game
   def player_turn
     calculate_current_hand
     loop do
+      break if dealt_21?(@player)
       show_cards
       @player.choice = player_choice
       break unless @player.choice.start_with?('h')
@@ -286,6 +286,8 @@ class Game
   def reset_hands
     @player.current_hand = []
     @dealer.current_hand = []
+    @dealer.win_status = 'no'
+    @dealer.turn = 'no'
   end
 
   def game_reset
