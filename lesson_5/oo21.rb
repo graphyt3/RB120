@@ -31,18 +31,12 @@ class Participant
     @current_hand = []
   end
 
-  def hit
-  end
-
-  def stay
-  end
-
   def busted?
     @hand_score > Deck::HIGH
   end
 
   def update_hand_total_score
-    values = @current_hand.map { |card| card.face } # extract all card values & store into new array
+    values = @current_hand.map(&:face) # { |card| card.face } extract all card values & store into new array
     sum = 0
     values.each do |face|
       if 'JQK'.include?(face)
@@ -72,12 +66,12 @@ class Player < Participant
   def initialize
     super
     @choice = ''
-  end 
+  end
 end
 
 class Dealer < Participant
   attr_accessor :turn, :win_status
-  
+
   def initialize
     super
     @win_status = 'no'
@@ -86,13 +80,13 @@ class Dealer < Participant
 end
 
 class Deck
-  FACES = %w[2 3 4 5 6 7 8 9 10 J Q K A].freeze
-  SUITS = %w[Hearts Diamonds Clubs Spades].freeze
+  FACES = %w(2 3 4 5 6 7 8 9 10 J Q K A).freeze
+  SUITS = %w(Hearts Diamonds Clubs Spades).freeze
   HIGH = 21
   DEALER_BREAK = 17
 
   attr_accessor :cards
-  
+
   def initialize
     @cards = []
     new_deck_shuffle
@@ -106,10 +100,6 @@ class Deck
     end
     @cards.shuffle!
   end
-
-  def deal
-    # does the dealer or the deck deal?
-  end
 end
 
 class Card
@@ -118,15 +108,13 @@ class Card
   def initialize(face, suit)
     @face = face
     @suit = suit
-    # what are the "states" of a card?
   end
-
-
 end
 
 class Game
   include Displayable
   attr_accessor :deck, :player, :dealer
+
   MAX_WINS = 3
 
   def initialize
@@ -138,23 +126,26 @@ class Game
   def start
     loop do
       welcome_message
-      loop do 
-        deal_cards
-        #  || dealt_21?(@dealer)
-        player_turn
-        dealer_turn
-        show_result
-        break if champion?
-        press_enter_to_continue
-        reset_hands
-      end
+      main_game_loop
       break unless play_again?
       game_reset
     end
     goodbye_message
   end
-  
+
   private
+
+  def main_game_loop
+    loop do
+      deal_cards
+      player_turn
+      dealer_turn unless dealt_21?(@player)
+      show_result
+      break if champion?
+      press_enter_to_continue
+      reset_hands
+    end
+  end
 
   def welcome_message
     clear_screen
@@ -225,7 +216,7 @@ class Game
 
   def player_choice
     answer = nil
-    loop do 
+    loop do
       prompt("Your turn: (H)it or (S)tay?")
       answer = gets.chomp.downcase
       break if answer.start_with?('h') || answer.start_with?('s')
@@ -237,8 +228,9 @@ class Game
   def dealer_turn
     @dealer.turn = 'yes' # to reveal dealer's hand
     loop do
-      break if @dealer.win_status == 'yes' || @dealer.hand_score >= Deck::DEALER_BREAK ||
-        @dealer.busted?
+      break if @dealer.win_status == 'yes' ||
+               @dealer.hand_score >= Deck::DEALER_BREAK ||
+               @dealer.busted?
       @dealer.current_hand << @deck.cards.pop # dealer hits
       calculate_current_hand
     end
@@ -280,7 +272,7 @@ class Game
   def play_again?
     prompt("Would you like to play again? (y/n)")
     answer = gets.chomp
-    answer.downcase.start_with?('y') 
+    answer.downcase.start_with?('y')
   end
 
   def reset_hands
