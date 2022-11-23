@@ -36,7 +36,7 @@ class Participant
   end
 
   def update_hand_total_score
-    values = @current_hand.map(&:face) # { |card| card.face } extract all card values & store into new array
+    values = @current_hand.map(&:face) # extract values & store into new array
     sum = 0
     values.each do |face|
       if 'JQK'.include?(face)
@@ -147,6 +147,7 @@ class Game
     end
   end
 
+  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def welcome_message
     clear_screen
     prompt('Welcome to Twenty-One!')
@@ -162,6 +163,7 @@ class Game
     prompt('Press Enter to Start!')
     gets
   end
+  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
   def deal_cards
     2.times do
@@ -173,12 +175,15 @@ class Game
   def show_cards
     clear_screen
     if @dealer.turn == 'yes'
-      prompt("Dealer has: #{cards_in_hand(@dealer.current_hand)} for a total of #{@dealer.hand_score}")
+      prompt("Dealer has: #{cards_in_hand(@dealer.current_hand)}"\
+      " for a total of #{@dealer.hand_score}")
     else
-      prompt("Dealer has: #{@dealer.current_hand[0].face} of #{@dealer.current_hand[0].suit}, and unknown card")
+      prompt("Dealer has: #{@dealer.current_hand[0].face} of "\
+        "#{@dealer.current_hand[0].suit}, and unknown card")
     end
     single_spacer
-    prompt("You have: #{cards_in_hand(@player.current_hand)} for a total of #{@player.hand_score}")
+    prompt("You have: #{cards_in_hand(@player.current_hand)}"\
+    " for a total of #{@player.hand_score}")
     single_spacer
     puts "==============================================="
   end
@@ -262,7 +267,8 @@ class Game
 
   def show_total_wins
     single_spacer
-    prompt("Grand Total Wins:: Player: #{@player.total_wins} | Dealer: #{@dealer.total_wins}")
+    prompt("Grand Total Wins:: Player: #{@player.total_wins}"\
+      " | Dealer: #{@dealer.total_wins}")
   end
 
   def champion?
