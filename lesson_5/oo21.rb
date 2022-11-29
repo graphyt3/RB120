@@ -93,9 +93,9 @@ class Deck
   end
 
   def new_deck_shuffle
-    FACES.each do |faces|
-      SUITS.each do |suits|
-        @cards << Card.new(faces, suits)
+    FACES.each do |face|
+      SUITS.each do |suit|
+        @cards << Card.new(face, suit)
       end
     end
     @cards.shuffle!
