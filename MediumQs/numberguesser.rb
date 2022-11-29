@@ -1,9 +1,9 @@
 class GuessingGame
-  attr_accessor :count, :number, :guess, :win_status
-  MAX_GUESSES = 7
-  RANGE = 1..100
+  attr_accessor :count, :number, :guess, :win_status, :low, :high
 
-  def initialize
+  def initialize(low = 0, high = 100)
+    @low = low
+    @high = high
     @guess = nil
   end
 
@@ -25,8 +25,8 @@ class GuessingGame
   end
 
   def reset_game
-    @count = MAX_GUESSES
-    @number = rand(RANGE)
+    @number = rand(low..high)
+    @count = Math.log2(high-low).to_i + 1
     @guess = nil
     @win_status = nil
   end
@@ -56,9 +56,9 @@ class GuessingGame
 
   def obtain_guess
     loop do
-      print "Enter a number between #{RANGE.first} and #{RANGE.last}: "
+      print "Enter a number between #{low} and #{high}: "
       self.guess = gets.chomp.to_i
-      break if RANGE.include?(guess)
+      break if (low..high).include?(guess)
       print "Invalid Guess. "
     end
   end
@@ -74,5 +74,5 @@ class GuessingGame
 
 end
 
-game = GuessingGame.new
+game = GuessingGame.new(501, 1500)
 game.play
