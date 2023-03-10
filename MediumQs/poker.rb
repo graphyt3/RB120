@@ -55,12 +55,15 @@ end
 # Include Card and Deck classes from the last two exercises.
 
 class PokerHand
-  attr_accessor :hand
+  attr_accessor :hand, :rank_count
   
   def initialize(deck)
     @hand = []
+    @rank_count = Hash.new(0)
     5.times do 
-      @hand << deck.draw
+      card = deck.draw
+      @hand << card
+      @rank_count[card.rank] += 1
     end
   end
 
@@ -86,36 +89,48 @@ class PokerHand
   private
 
   def royal_flush?
+    straight_flush? && hand.min.rank == 10
   end
 
   def straight_flush?
+    flush? && straight?
   end
 
   def four_of_a_kind?
+    rank_count.values.any?(4)
   end
 
   def full_house?
+    three_of_a_kind? && pair?
   end
 
   def flush?
+    temp = hand.first.suit
+    hand.all? {|card| card.suit == temp}
   end
 
   def straight?
+    return false unless rank_count.values.all? {|value| value == 1}
+    hand.min.value == (hand.max.value - 4)
   end
 
   def three_of_a_kind?
+    rank_count.values.any?(3)
   end
 
   def two_pair?
+    rank_count.values.count(2) == 2 
   end
 
   def pair?
+    rank_count.values.any?(2)
   end
 end
 
 hand = PokerHand.new(Deck.new)
 puts hand.print
 puts hand.evaluate
+puts hand.rank_count
 
 # Danger danger danger: monkey
 # patching for testing purposes.
